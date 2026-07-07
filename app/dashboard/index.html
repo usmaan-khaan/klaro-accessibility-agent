@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Klaro — Clarity for Every Interface</title>
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: rgba(22, 27, 38, 0.62);
+      --panel-2: rgba(31, 38, 52, 0.7);
+      --border: rgba(120, 140, 180, 0.18);
+      --text: #eaf1fb;
+      --muted: #93a3ba;
+      --accent: #4f8cff;
+      --accent-2: #a35cff;
+      --accent-3: #19e3c2;
+      --ok: #2fe08a;
+      --warn: #ffc024;
+      --bad: #ff5d6c;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: var(--bg);
+      overflow-x: hidden;
+    }
+    /* ---- animated aurora background ---- */
+    .aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; }
+    .aurora span {
+      position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55;
+      mix-blend-mode: screen; animation: drift 18s ease-in-out infinite alternate;
+    }
+    .aurora .a1 { width: 620px; height: 620px; left: -120px; top: -160px;
+      background: radial-gradient(circle, #4f8cff, transparent 65%); }
+    .aurora .a2 { width: 560px; height: 560px; right: -120px; top: -80px;
+      background: radial-gradient(circle, #a35cff, transparent 65%); animation-delay: -4s; }
+    .aurora .a3 { width: 520px; height: 520px; left: 30%; bottom: -220px;
+      background: radial-gradient(circle, #19e3c2, transparent 65%); animation-delay: -9s; }
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(60px,40px) scale(1.15); }
+      100% { transform: translate(-40px,30px) scale(.95); }
+    }
+    .grid-overlay { position: fixed; inset: 0; z-index: -1; opacity: .25;
+      background-image: linear-gradient(rgba(120,140,180,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120,140,180,.06) 1px, transparent 1px);
+      background-size: 44px 44px; mask-image: radial-gradient(circle at 50% 0%, #000 30%, transparent 80%); }
+
+    /* ---- header / brand ---- */
+    header { padding: 30px 34px 22px; display: flex; align-items: center; gap: 18px; }
+    .shield {
+      width: 56px; height: 56px; position: relative; flex: none;
+      display: grid; place-items: center;
+      filter: drop-shadow(0 6px 22px rgba(79,140,255,.55));
+      animation: floaty 5s ease-in-out infinite;
+    }
+    @keyframes floaty { 50% { transform: translateY(-5px); } }
+    .shield svg { width: 100%; height: 100%; }
+    .shield .sheen {
+      position: absolute; inset: 0; border-radius: 14px; overflow: hidden; pointer-events: none;
+    }
+    .shield .sheen::after {
+      content: ""; position: absolute; top: -60%; left: -120%; width: 60%; height: 220%;
+      background: linear-gradient(115deg, transparent, rgba(255,255,255,.55), transparent);
+      transform: rotate(18deg); animation: sweep 4.5s ease-in-out infinite;
+    }
+    @keyframes sweep { 0%,60% { left: -120%; } 100% { left: 160%; } }
+    .brand h1 {
+      margin: 0; font-size: 30px; font-weight: 800; letter-spacing: 4px;
+      background: linear-gradient(90deg, #6ea8ff, #b98bff 45%, #36f0d0);
+      background-size: 200% auto; -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; animation: shimmerText 6s linear infinite;
+    }
+    @keyframes shimmerText { to { background-position: 200% center; } }
+    .brand p { margin: 3px 0 0; color: var(--muted); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .status-chip {
+      margin-left: auto; display: flex; align-items: center; gap: 9px;
+      font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 999px;
+      border: 1px solid var(--border); background: rgba(255,255,255,.03); backdrop-filter: blur(8px);
+      transition: all .3s ease;
+    }
+    .status-chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 0 currentColor; }
+    .status-chip.clean { color: var(--ok); border-color: rgba(47,224,138,.4); }
+    .status-chip.run   { color: var(--accent); border-color: rgba(79,140,255,.5); }
+    .status-chip.paused{ color: var(--warn); border-color: rgba(255,192,36,.5); }
+    .status-chip.err   { color: var(--bad); border-color: rgba(255,93,108,.5); }
+    .status-chip.healed{ color: var(--accent-3); border-color: rgba(25,227,194,.6); box-shadow: 0 0 26px rgba(25,227,194,.35); }
+    .status-chip .dot { background: currentColor; animation: pulseDot 1.6s ease-in-out infinite; }
+    @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 0 currentColor; } 50% { box-shadow: 0 0 0 6px transparent; } }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 8px 24px 90px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 22px 24px; margin-bottom: 22px; backdrop-filter: blur(14px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+      position: relative; overflow: hidden; animation: rise .5s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .card::before { content:""; position:absolute; inset:0 0 auto 0; height:1px;
+      background: linear-gradient(90deg, transparent, rgba(120,160,255,.6), transparent); }
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+    .sec { font-size: 16px; margin: 0 0 16px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+    .sec .ic { font-size: 18px; }
+    label.fld { display:block; font-size:13px; color:var(--muted); margin-bottom:9px; }
+    textarea {
+      width: 100%; min-height: 92px; resize: vertical; color: var(--text);
+      background: rgba(10,14,22,.7); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; font-family: ui-monospace, "Cascadia Code", monospace; font-size: 13px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,140,255,.18); }
+    .row { display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+
+    /* ---- dynamic buttons ---- */
+    .btn {
+      position: relative; overflow: hidden; border: 0; border-radius: 12px; color:#fff;
+      padding: 13px 26px; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing:.3px;
+      transition: transform .12s ease, box-shadow .25s ease, filter .25s ease;
+      background-size: 200% auto;
+    }
+    .btn:disabled { opacity:.5; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); background-position: right center; }
+    .btn:active:not(:disabled) { transform: translateY(0) scale(.98); }
+    .btn::after { /* shimmer sweep */
+      content:""; position:absolute; top:0; left:-120%; width:55%; height:100%;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,.4), transparent);
+      transform: skewX(-20deg); transition: left .6s ease;
+    }
+    .btn:hover:not(:disabled)::after { left: 160%; }
+    .btn .ripple { position:absolute; border-radius:50%; transform: scale(0);
+      background: rgba(255,255,255,.45); animation: ripple .6s ease-out; pointer-events:none; }
+    @keyframes ripple { to { transform: scale(3.2); opacity: 0; } }
+    .btn-primary { background-image: linear-gradient(120deg,#4f8cff,#a35cff,#4f8cff);
+      box-shadow: 0 10px 26px rgba(99,110,255,.45); }
+    .btn-ok { background-image: linear-gradient(120deg,#1aa861,#2fe08a,#1aa861);
+      box-shadow: 0 10px 26px rgba(47,224,138,.4); }
+    .btn-bad { background-image: linear-gradient(120deg,#c5303f,#ff5d6c,#c5303f);
+      box-shadow: 0 10px 26px rgba(255,93,108,.4); }
+    .btn-ghost { background-image: none; background: rgba(255,255,255,.06);
+      border: 1px solid var(--border); color: var(--text); box-shadow: none; }
+    .batch-info { font-size: 13px; font-weight: 700; color: var(--accent-3); letter-spacing: .3px; }
+
+    .status-line { display:flex; align-items:center; gap:11px; font-size:14px; color:var(--muted); }
+    .spinner { width:18px; height:18px; border-radius:50%;
+      border:2px solid rgba(255,255,255,.18); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* scan bar */
+    .scanbar { height:4px; border-radius:4px; background: rgba(120,140,180,.15); overflow:hidden; margin-top:16px; }
+    .scanbar i { display:block; height:100%; width:40%;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+      animation: scan 1.1s ease-in-out infinite; }
+    @keyframes scan { 0%{ transform: translateX(-110%);} 100%{ transform: translateX(330%);} }
+
+    .hidden { display:none !important; }
+    .count { color:#fff; font-size:13px; font-weight:800; padding:2px 12px; border-radius:999px;
+      background: linear-gradient(120deg,#ff5d6c,#ff8a3d); box-shadow:0 6px 16px rgba(255,93,108,.4); }
+    ul.viol { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+    ul.viol li { background: var(--panel-2); border:1px solid var(--border); border-left:4px solid var(--warn);
+      border-radius:12px; padding:13px 16px; font-size:13px; display:flex; gap:12px; align-items:flex-start;
+      animation: rise .4s ease both; }
+    ul.viol li .vic { font-size:20px; line-height:1; margin-top:1px; }
+    ul.viol li.sev-high { border-left-color: var(--bad); }
+    ul.viol li.sev-med  { border-left-color: #ff8a3d; }
+    ul.viol li.sev-low  { border-left-color: var(--warn); }
+    ul.viol li .vtype { font-weight:800; }
+    .sev-high .vtype { color:#ff96a1; } .sev-med .vtype { color:#ffb27a; } .sev-low .vtype { color:#ffe07a; }
+    ul.viol li code { color: var(--muted); font-size:12px; word-break:break-all; display:block; margin-top:4px; }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    @media (max-width: 880px){ .grid2 { grid-template-columns: 1fr; } }
+    .shot { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:#fff;
+      transition: transform .3s ease, box-shadow .3s ease; }
+    .shot:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.45); }
+    .shot figcaption { background: var(--panel-2); color: var(--muted); font-size:12px; padding:8px 12px; font-weight:600; }
+    .shot img { display:block; width:100%; }
+    .tabs { display:flex; gap:8px; margin-bottom:14px; }
+    .tab { font-size:13px; font-weight:600; padding:8px 16px; border-radius:10px; cursor:pointer;
+      background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--muted); transition: all .2s; }
+    .tab:hover { color:#fff; }
+    .tab.active { color:#fff; border-color: var(--accent); background: rgba(79,140,255,.18);
+      box-shadow: 0 0 18px rgba(79,140,255,.3); }
+    pre.code { background:#080b11; border:1px solid var(--border); border-radius:12px; padding:16px; overflow:auto;
+      max-height:380px; font-size:12px; line-height:1.55; font-family: ui-monospace,"Cascadia Code",monospace;
+      white-space:pre-wrap; word-break:break-word; }
+    pre.code .add { background: rgba(47,224,138,.16); display:block; border-radius:3px; }
+    .codecol .lbl { font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+      margin-bottom:9px; display:flex; align-items:center; gap:7px; }
+    .codecol.broken .lbl { color:#ff96a1; } .codecol.healed .lbl { color: var(--accent-3); }
+    .preview-frame { width:100%; height:360px; border:1px solid var(--border); border-radius:12px; background:#fff; }
+    .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+      background: var(--panel); border:1px solid var(--border); padding:13px 22px; border-radius:12px;
+      font-size:14px; font-weight:600; backdrop-filter: blur(12px);
+      box-shadow:0 14px 40px rgba(0,0,0,.5); animation: rise .3s ease; z-index: 60; }
+    #finalMsg { font-size:14px; line-height:1.65; white-space:pre-wrap; }
+    .final-ok { color: var(--accent-3); }
+    footer { text-align:center; color:var(--muted); font-size:12px; padding:24px; }
+    /* confetti */
+    .confetti { position: fixed; width: 9px; height: 14px; top: -20px; z-index: 70; pointer-events:none;
+      animation: fall linear forwards; }
+    @keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: .9; } }
+  </style>
+</head>
+<body>
+  <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+  <div class="grid-overlay"></div>
+
+  <header>
+    <div class="shield" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#5b9bff"/><stop offset=".5" stop-color="#a35cff"/><stop offset="1" stop-color="#19e3c2"/>
+          </linearGradient>
+        </defs>
+                <path d="M27 23 L17 32 L27 41 M37 23 L47 32 L37 41 M31 44 L33 20" fill="none" stroke="url(#g)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M32 9 A23 23 0 0 1 55 32" fill="none" stroke="url(#g)" stroke-width="3.6" stroke-linecap="round"/>
+        <path d="M32 55 A23 23 0 0 1 9 32" fill="none" stroke="url(#g)" stroke-width="3.6" stroke-linecap="round"/>
+        <path d="M55 32 l-2 -8 l8 4 z" fill="#19e3c2"/>
+        <path d="M9 32 l2 8 l-8 -4 z" fill="#19e3c2"/>
+      </svg>
+      <div class="sheen"></div>
+    </div>
+    <div class="brand">
+      <h1>Klaro</h1>
+      <p>Audit. Repair. Verify.</p>
+    </div>
+    <div id="globalStatus" class="status-chip clean"><span class="dot"></span><span id="statusText">Idle</span></div>
+  </header>
+
+  <main>
+    <!-- Trigger -->
+    <section class="card">
+      <h2 class="sec"><span class="ic">⚡</span> Run an audit</h2>
+      <label class="fld" for="url">Audit a live URL (optional)</label>
+      <input id="url" type="url" placeholder="https://example.com" style="width:100%;background:rgba(10,14,22,.7);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:14px;" />
+      <label class="fld" for="payload">Commit / change description (or a local <code>.html</code> path to audit)</label>
+      <textarea id="payload" spellcheck="false">Audit the dashboard UI for WCAG 2.2 AA violations and self-heal them.</textarea>
+      <div class="row">
+        <button id="refreshBtn" class="btn btn-ghost">⟳ Next 5</button>
+        <button id="runBtn" class="btn btn-primary">🛡️ Run audit</button>
+        <span id="batchInfo" class="batch-info"></span>
+        <div id="statusLine" class="status-line"></div>
+      </div>
+      <div id="scanbar" class="scanbar hidden"><i></i></div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" class="card hidden">
+      <h2 class="sec"><span class="ic">🔍</span> Detected violations <span id="violCount" class="count">0</span></h2>
+      <ul id="violList" class="viol"></ul>
+    </section>
+
+    <!-- Snapshots -->
+    <section id="snapshots" class="card hidden">
+      <h2 class="sec"><span class="ic">📸</span> Rendered snapshots</h2>
+      <div class="grid2">
+        <figure class="shot"><figcaption>Desktop · 1200×800</figcaption><img id="shotDesktop" alt="Desktop render of the audited page" /></figure>
+        <figure class="shot"><figcaption>Mobile · 375×812</figcaption><img id="shotMobile" alt="Mobile render of the audited page" /></figure>
+      </div>
+    </section>
+
+    <!-- Diff / heal review -->
+    <section id="review" class="card hidden">
+      <h2 class="sec"><span class="ic">🩹</span> Proposed self-heal — review before applying</h2>
+      <div class="tabs" role="tablist">
+        <div class="tab active" data-view="diff" role="tab">Code diff</div>
+        <div class="tab" data-view="preview" role="tab">Live preview (healed)</div>
+      </div>
+      <div id="viewDiff" class="grid2">
+        <div class="codecol broken"><div class="lbl">✕ Original (broken)</div><pre id="brokenCode" class="code"></pre></div>
+        <div class="codecol healed"><div class="lbl">✓ Healed</div><pre id="healedCode" class="code"></pre></div>
+      </div>
+      <div id="viewPreview" class="hidden">
+        <iframe id="healedPreview" class="preview-frame" title="Healed page preview"></iframe>
+      </div>
+      <div class="row" style="margin-top:20px;">
+        <button id="approveBtn" class="btn btn-ok">✓ Approve &amp; apply heal</button>
+        <button id="rejectBtn" class="btn btn-bad">✕ Reject</button>
+        <button id="downloadBtn" class="btn btn-ghost">⬇ Download healed HTML</button>
+        <span class="status-line">Approve re-audits to verify. For a live URL the page is never changed — download the healed copy instead.</span>
+      </div>
+    </section>
+
+    <!-- Final -->
+    <section id="final" class="card hidden">
+      <h2 class="sec"><span class="ic">🏁</span> Result</h2>
+      <p id="finalMsg"></p>
+    </section>
+  </main>
+
+  <footer>Klaro · Clarity for Every Interface · served by the ambient FastAPI service · <span id="ts"></span></footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = { sessionId: null, interruptId: null };
+    $("ts").textContent = new Date().toLocaleString();
+
+    function setStatus(text, cls) {
+      const el = $("globalStatus");
+      el.className = "status-chip " + cls;
+      $("statusText").textContent = text;
+    }
+    function toast(msg) {
+      const t = document.createElement("div");
+      t.className = "toast"; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2800);
+    }
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+    }
+    // button ripple
+    document.addEventListener("click", (e) => {
+      const b = e.target.closest(".btn");
+      if (!b || b.disabled) return;
+      const r = document.createElement("span");
+      const d = Math.max(b.clientWidth, b.clientHeight);
+      r.className = "ripple"; r.style.width = r.style.height = d + "px";
+      const rect = b.getBoundingClientRect();
+      r.style.left = (e.clientX - rect.left - d / 2) + "px";
+      r.style.top = (e.clientY - rect.top - d / 2) + "px";
+      b.appendChild(r); setTimeout(() => r.remove(), 600);
+    });
+
+    function countUp(el, target) {
+      let n = 0; const step = Math.max(1, Math.ceil(target / 18));
+      const t = setInterval(() => { n += step; if (n >= target) { n = target; clearInterval(t); } el.textContent = n; }, 30);
+    }
+    function severity(type) {
+      if (type === "Missing Alt Tag") return { cls:"sev-high", ic:"🖼️" };
+      if (type === "Missing Form Label") return { cls:"sev-high", ic:"🏷️" };
+      if (type === "Invalid ARIA Role") return { cls:"sev-med", ic:"🧩" };
+      if (type === "Low Color Contrast") return { cls:"sev-low", ic:"🎨" };
+      return { cls:"sev-med", ic:"⚠️" };
+    }
+    function renderDiff(broken, healed) {
+      const brokenSet = new Set(broken.split("\n").map(l => l.trim()));
+      $("brokenCode").textContent = broken;
+      $("healedCode").innerHTML = healed.split("\n").map(line => {
+        const isNew = line.trim() && !brokenSet.has(line.trim());
+        return isNew ? `<span class="add">${escapeHtml(line)}</span>` : escapeHtml(line);
+      }).join("\n");
+    }
+    function celebrate() {
+      const colors = ["#4f8cff","#a35cff","#19e3c2","#2fe08a","#ffc024"];
+      for (let i = 0; i < 70; i++) {
+        const c = document.createElement("div");
+        c.className = "confetti";
+        c.style.left = Math.random() * 100 + "vw";
+        c.style.background = colors[i % colors.length];
+        c.style.animationDuration = (1.6 + Math.random() * 1.6) + "s";
+        c.style.animationDelay = (Math.random() * 0.5) + "s";
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3600);
+      }
+    }
+
+    async function postJSON(url, body) {
+      const res = await fetch(url, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status + " — " + (await res.text()));
+      return res.json();
+    }
+
+    function showPaused(data) {
+      state.interruptId = data.interrupt_id;
+      let payload = {};
+      try { payload = JSON.parse(data.message || "{}"); } catch (_) {}
+
+      const viols = payload.violations || [];
+      countUp($("violCount"), viols.length);
+      $("violList").innerHTML = viols.map(v => {
+        const s = severity(v.type);
+        return `<li class="${s.cls}"><span class="vic">${s.ic}</span><div>
+          <div class="vtype">${escapeHtml(v.type)}</div>
+          <div>${escapeHtml(v.description || "")}</div>
+          <code>${escapeHtml(v.element || "")}</code></div></li>`;
+      }).join("") || "<li class='sev-med'><span class='vic'>✔</span><div>No structured violations returned.</div></li>";
+      $("results").classList.remove("hidden");
+
+      if (payload.desktop_snapshot) { $("shotDesktop").src = "data:image/png;base64," + payload.desktop_snapshot; $("snapshots").classList.remove("hidden"); }
+      if (payload.mobile_snapshot) { $("shotMobile").src = "data:image/png;base64," + payload.mobile_snapshot; }
+
+      renderDiff(payload.broken_html || "", payload.healed_html || "");
+      state.healed = payload.healed_html || "";
+      $("healedPreview").srcdoc = payload.healed_html || "";
+      $("review").classList.remove("hidden");
+
+      setStatus("Paused — needs review", "paused");
+      $("statusLine").innerHTML = ""; $("scanbar").classList.add("hidden");
+    }
+
+    function showFinal(data) {
+      $("statusLine").innerHTML = ""; $("scanbar").classList.add("hidden");
+      const out = (data.outputs || []).join("\n\n") || "Workflow completed.";
+      const clean = /verified successfully|All accessibility checks passed/i.test(out);
+      $("finalMsg").textContent = out;
+      $("finalMsg").className = clean ? "final-ok" : "";
+      $("final").classList.remove("hidden");
+      if (clean) { setStatus("Healed ✓", "healed"); celebrate(); }
+      else { setStatus("Completed", "clean"); }
+    }
+
+    async function runAudit() {
+      ["results","snapshots","review","final"].forEach(id => $(id).classList.add("hidden"));
+      $("runBtn").disabled = true; $("refreshBtn").disabled = true;
+      setStatus("Scanning…", "run");
+      $("scanbar").classList.remove("hidden");
+      $("statusLine").innerHTML = '<span class="spinner"></span> Launching headless browser &amp; auditing…';
+      try {
+        const url = $("url").value.trim();
+        const data = await postJSON("/trigger", { commit_payload: url || $("payload").value });
+        state.sessionId = data.session_id;
+        if (data.status === "paused_for_hitl") showPaused(data);
+        else showFinal(data);
+      } catch (e) {
+        setStatus("Error", "err"); $("scanbar").classList.add("hidden");
+        $("statusLine").textContent = String(e.message || e);
+      } finally { $("runBtn").disabled = false; $("refreshBtn").disabled = false; }
+    }
+    $("runBtn").addEventListener("click", runAudit);
+
+    async function loadBatch() {
+      try {
+        const b = await (await fetch("/batch-status")).json();
+        $("batchInfo").textContent = "Batch " + b.batch + "/" + b.batches + " · " + b.total_cases + " seeded cases";
+      } catch (_) {}
+    }
+    $("refreshBtn").addEventListener("click", async () => {
+      $("refreshBtn").disabled = true;
+      try {
+        const b = await postJSON("/next-batch", {});
+        $("batchInfo").textContent = "Batch " + b.batch + "/" + b.batches + " · " + b.total_cases + " seeded cases";
+        await runAudit();
+      } catch (e) { toast(String(e.message || e)); }
+      finally { $("refreshBtn").disabled = false; }
+    });
+    loadBatch();
+
+    async function resume(action) {
+      $("approveBtn").disabled = true; $("rejectBtn").disabled = true;
+      setStatus(action === "approve" ? "Applying & verifying…" : "Rejecting…", "run");
+      $("scanbar").classList.remove("hidden");
+      try {
+        const data = await postJSON("/resume/" + encodeURIComponent(state.sessionId), { interrupt_id: state.interruptId, action });
+        if (data.status === "paused_for_hitl") { showPaused(data); toast("Another review step is required."); }
+        else { $("review").classList.add("hidden"); showFinal(data); toast(action === "approve" ? "Heal applied ✓" : "Rejected — original kept."); }
+      } catch (e) {
+        setStatus("Error", "err"); $("scanbar").classList.add("hidden"); toast(String(e.message || e));
+      } finally { $("approveBtn").disabled = false; $("rejectBtn").disabled = false; }
+    }
+    $("approveBtn").addEventListener("click", () => resume("approve"));
+    $("rejectBtn").addEventListener("click", () => resume("reject"));
+    $("downloadBtn").addEventListener("click", () => {
+      const blob = new Blob([state.healed || ""], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "klaro-healed.html";
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+    });
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const v = tab.dataset.view;
+        $("viewDiff").classList.toggle("hidden", v !== "diff");
+        $("viewPreview").classList.toggle("hidden", v !== "preview");
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+rules:
+  - id: detect-hardcoded-google-api-keys
+    message: "Critical Security Violation: Hardcoded Google API key detected. Remove API key and use environment variables."
+    languages:
+      - generic
+    severity: ERROR
+    patterns:
+      - pattern-regex: "AIzaSy[a-zA-Z0-9-_]{33}"

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mock Web Application - Accessibility Audit Target</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #ffffff; color: #111111; padding: 40px; }
+        /* Intentionally broken contrast for the demo */
+        .poor-contrast-1 { color: #7f7f7f; background-color: #808080; padding: 10px; font-size: 14px; }
+        .poor-contrast-2 { color: #aaaaaa; background-color: #cccccc; padding: 10px; }
+        .modal { border: 1px solid #ccc; padding: 20px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Dashboard</h1>
+
+    <!-- 1. Missing alt attribute -->
+    <div class="section">
+        <h2>Company Logo</h2>
+        <img src="logo.png" width="200" height="50">
+    </div>
+
+    <!-- 2. Missing form label -->
+    <div class="section">
+        <h2>Subscribe to Newsletter</h2>
+        <input type="text" id="email-subscribe-input" placeholder="Enter your email...">
+        <button id="btn-submit-subscribe">Subscribe</button>
+    </div>
+
+    <!-- 3. Low contrast text -->
+    <div class="section">
+        <h2>Terms &amp; Conditions</h2>
+        <p class="poor-contrast-1">By subscribing, you agree to our terms of service and privacy policy.</p>
+        <p class="poor-contrast-2">Disclaimer: this is a poor contrast message.</p>
+    </div>
+
+    <!-- 4. Invalid ARIA role -->
+    <div class="section modal" role="popup-window">
+        <h3 id="feedback-heading">Quick Feedback</h3>
+        <input type="text" id="feedback-text" placeholder="Your feedback">
+        <button id="trap-focus-btn">Stay Focused</button>
+    </div>
+</body>
+</html>
