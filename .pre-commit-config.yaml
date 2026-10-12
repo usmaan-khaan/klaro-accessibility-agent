@@ -1,18 +1,18 @@
 repos:
-  - repo: https://github.com/semgrep/semgrep
-    rev: v1.75.0
+  - repo: local
     hooks:
       - id: semgrep
         name: Semgrep Scan for Google API Credentials
-        entry: semgrep scan --config .semgrep/rules.yaml --error
+        entry: uv run semgrep scan --config .semgrep/rules.yaml --error
         language: system
         types: [text]
+        pass_filenames: false
         stages: [pre-commit]
   - repo: local
     hooks:
       - id: unit-tests
         name: Run unit tests (workflow graph + retry-cap + logic guards)
-        entry: uv run pytest tests/unit -q
+        entry: uv run python -m pytest tests/unit tests/test_agent.py -q
         language: system
         pass_filenames: false
         always_run: true

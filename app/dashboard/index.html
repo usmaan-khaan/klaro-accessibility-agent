@@ -234,9 +234,7 @@
     <!-- Trigger -->
     <section class="card">
       <h2 class="sec"><span class="ic">⚡</span> Run an audit</h2>
-      <label class="fld" for="url">Audit a live URL (optional)</label>
-      <input id="url" type="url" placeholder="https://example.com" style="width:100%;background:rgba(10,14,22,.7);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:14px;" />
-      <label class="fld" for="payload">Commit / change description (or a local <code>.html</code> path to audit)</label>
+      <label class="fld" for="payload">Audit description (demo runs offline)</label>
       <textarea id="payload" spellcheck="false">Audit the dashboard UI for WCAG 2.2 AA violations and self-heal them.</textarea>
       <div class="row">
         <button id="refreshBtn" class="btn btn-ghost">⟳ Next 5</button>
@@ -274,13 +272,12 @@
         <div class="codecol healed"><div class="lbl">✓ Healed</div><pre id="healedCode" class="code"></pre></div>
       </div>
       <div id="viewPreview" class="hidden">
-        <iframe id="healedPreview" class="preview-frame" title="Healed page preview"></iframe>
+        <iframe sandbox="" referrerpolicy="no-referrer" id="healedPreview" class="preview-frame" title="Healed page preview"></iframe>
       </div>
       <div class="row" style="margin-top:20px;">
         <button id="approveBtn" class="btn btn-ok">✓ Approve &amp; apply heal</button>
         <button id="rejectBtn" class="btn btn-bad">✕ Reject</button>
-        <button id="downloadBtn" class="btn btn-ghost">⬇ Download healed HTML</button>
-        <span class="status-line">Approve re-audits to verify. For a live URL the page is never changed — download the healed copy instead.</span>
+        <span class="status-line">Approve re-audits to verify. Only the session copy is repaired — download it after successful verification.</span>
       </div>
     </section>
 
@@ -288,6 +285,7 @@
     <section id="final" class="card hidden">
       <h2 class="sec"><span class="ic">🏁</span> Result</h2>
       <p id="finalMsg"></p>
+      <button id="downloadBtn" class="btn btn-ghost" disabled>⬇ Download verified HTML</button>
     </section>
   </main>
 
@@ -367,6 +365,7 @@
     }
 
     function showPaused(data) {
+      $("downloadBtn").disabled = true;
       state.interruptId = data.interrupt_id;
       let payload = {};
       try { payload = JSON.parse(data.message || "{}"); } catch (_) {}
@@ -387,7 +386,7 @@
 
       renderDiff(payload.broken_html || "", payload.healed_html || "");
       state.healed = payload.healed_html || "";
-      $("healedPreview").srcdoc = payload.healed_html || "";
+      $("healedPreview").srcdoc = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; style-src \'unsafe-inline\'; form-action \'none\'; base-uri \'none\'">' + (payload.healed_html || "");
       $("review").classList.remove("hidden");
 
       setStatus("Paused — needs review", "paused");
@@ -397,23 +396,26 @@
     function showFinal(data) {
       $("statusLine").innerHTML = ""; $("scanbar").classList.add("hidden");
       const out = (data.outputs || []).join("\n\n") || "Workflow completed.";
-      const clean = /verified successfully|All accessibility checks passed/i.test(out);
+      const clean = /verified successfully|No issues found by the implemented checks/i.test(out);
+      $("downloadBtn").disabled = !(clean && state.healed);
       $("finalMsg").textContent = out;
       $("finalMsg").className = clean ? "final-ok" : "";
       $("final").classList.remove("hidden");
       if (clean) { setStatus("Healed ✓", "healed"); celebrate(); }
-      else { setStatus("Completed", "clean"); }
+      else { setStatus(/AUDIT FAILED|SECURITY ALERT|REMEDIATION INCOMPLETE/.test(out) ? "Failed / incomplete" : "Completed", /AUDIT FAILED|SECURITY ALERT|REMEDIATION INCOMPLETE/.test(out) ? "err" : "clean"); }
     }
 
     async function runAudit() {
+      state.healed = "";
+      $("downloadBtn").disabled = true;
       ["results","snapshots","review","final"].forEach(id => $(id).classList.add("hidden"));
       $("runBtn").disabled = true; $("refreshBtn").disabled = true;
       setStatus("Scanning…", "run");
       $("scanbar").classList.remove("hidden");
       $("statusLine").innerHTML = '<span class="spinner"></span> Launching headless browser &amp; auditing…';
       try {
-        const url = $("url").value.trim();
-        const data = await postJSON("/trigger", { commit_payload: url || $("payload").value });
+        const data = await postJSON("/trigger", { commit_payload: $("payload").value });
+        state.auditToken = data.audit_token;
         state.sessionId = data.session_id;
         if (data.status === "paused_for_hitl") showPaused(data);
         else showFinal(data);
@@ -446,9 +448,9 @@
       setStatus(action === "approve" ? "Applying & verifying…" : "Rejecting…", "run");
       $("scanbar").classList.remove("hidden");
       try {
-        const data = await postJSON("/resume/" + encodeURIComponent(state.sessionId), { interrupt_id: state.interruptId, action });
+        const data = await postJSON("/resume/" + encodeURIComponent(state.sessionId), { interrupt_id: state.interruptId, action, audit_token: state.auditToken });
         if (data.status === "paused_for_hitl") { showPaused(data); toast("Another review step is required."); }
-        else { $("review").classList.add("hidden"); showFinal(data); toast(action === "approve" ? "Heal applied ✓" : "Rejected — original kept."); }
+        else { $("review").classList.add("hidden"); showFinal(data); toast(action === "approve" ? "Verification finished — see result." : "Rejected — original kept."); }
       } catch (e) {
         setStatus("Error", "err"); $("scanbar").classList.add("hidden"); toast(String(e.message || e));
       } finally { $("approveBtn").disabled = false; $("rejectBtn").disabled = false; }
