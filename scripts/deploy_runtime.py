@@ -26,6 +26,9 @@ def main():
     if not args.engine.startswith("projects/") or f"/locations/{args.region}/reasoningEngines/" not in args.engine:
         parser.error("Engine resource must belong to the selected region.")
     requirements = root / "app/app_utils/.requirements.txt"
+    # A Windows checkout's CRLF shebang cannot execute in the Linux build.
+    installer = root / "installation_scripts/install_chromium.sh"
+    installer.write_bytes(installer.read_bytes().replace(b"\r\n", b"\n"))
     subprocess.run([
         "uv", "export", "--locked", "--no-hashes", "--no-header", "--no-dev",
         "--no-emit-project", "--no-sources", "--output-file", str(requirements),
@@ -44,6 +47,7 @@ def main():
                  "K_CONFIGURATION", "GOOGLE_APPLICATION_CREDENTIALS"):
         env_vars.pop(name, None)
     env_vars.update({"KLARO_MODEL_LOCATION": "global",
+                     "KLARO_MODEL": "gemini-3.5-flash",
                      "GOOGLE_GENAI_USE_VERTEXAI": "True",
                      "PLAYWRIGHT_BROWSERS_PATH": "/opt/klaro-browsers",
                      "NUM_WORKERS": "1",

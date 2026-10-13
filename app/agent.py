@@ -493,7 +493,7 @@ remediation_agent = LlmAgent(
     output_schema=RepairOutput,
     name="remediation_agent",
     model=Gemini(
-        model="gemini-flash-latest",
+        model=os.environ.get("KLARO_MODEL", "gemini-3.5-flash"),
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction="You are an expert web accessibility engineer that patches HTML code to meet WCAG 2.2 AA requirements.",
