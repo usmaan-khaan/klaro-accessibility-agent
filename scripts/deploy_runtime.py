@@ -49,7 +49,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
     print(f"Updating {args.engine} from {commit}", flush=True)
     remote = client.agent_engines.update(name=args.engine, config={
-        "source_packages": ["app", "installation_scripts"],
+        "source_packages": ["app", "installation_scripts/install_chromium.sh"],
         "entrypoint_module": "app.agent_runtime_app",
         "entrypoint_object": "agent_runtime",
         "requirements_file": "app/app_utils/.requirements.txt",
