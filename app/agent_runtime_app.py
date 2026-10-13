@@ -56,7 +56,9 @@ class AgentEngineApp(AdkApp):
         return self
 
 
-gemini_location = os.environ.get("GOOGLE_CLOUD_LOCATION")
+gemini_location = os.environ.get("KLARO_MODEL_LOCATION") or os.environ.get(
+    "GOOGLE_CLOUD_LOCATION"
+)
 logs_bucket_name = os.environ.get("LOGS_BUCKET_NAME")
 agent_runtime = AgentEngineApp(
     app=adk_app,

@@ -38,8 +38,12 @@ def main():
     # Preserve the platform's existing API schema; the entrypoint contract is unchanged.
     class_methods = existing.api_resource.spec.class_methods
     env_vars = {item.name: item.value for item in (existing.api_resource.spec.deployment_spec.env or [])}
-    env_vars.update({"GOOGLE_CLOUD_PROJECT": args.project,
-                     "GOOGLE_CLOUD_LOCATION": "global",
+    # Agent Runtime injects these reserved coordinates itself.
+    for name in ("GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_QUOTA_PROJECT",
+                 "GOOGLE_CLOUD_LOCATION", "PORT", "K_SERVICE", "K_REVISION",
+                 "K_CONFIGURATION", "GOOGLE_APPLICATION_CREDENTIALS"):
+        env_vars.pop(name, None)
+    env_vars.update({"KLARO_MODEL_LOCATION": "global",
                      "GOOGLE_GENAI_USE_VERTEXAI": "True",
                      "PLAYWRIGHT_BROWSERS_PATH": "/opt/klaro-browsers",
                      "NUM_WORKERS": "1",
