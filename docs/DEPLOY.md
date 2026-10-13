@@ -11,6 +11,23 @@ account. See [SAFETY.md](SAFETY.md) for limitations and production requirements.
 
 Never put the key in the repo or in client JavaScript. Use the host's secret manager only.
 
+## Updating the existing Agent Runtime API
+
+To update an existing Agent Runtime deployment, use the source deployment helper.
+It exports frozen requirements and includes the Chromium build script. The ordinary
+`agents-cli deploy` source package does not include that browser setup.
+
+```bash
+uv run python scripts/deploy_runtime.py \
+  --project <your-project-id> --region us-east1 \
+  --engine projects/<project-number>/locations/us-east1/reasoningEngines/<engine-id>
+```
+
+The helper updates only an explicitly named `accessibility-shield` agent. It keeps
+existing environment settings and API schemas, uses one worker/instance for session
+files, and disables full message capture in telemetry. Agent Runtime exposes an
+authenticated API; the dashboard requires the separate Cloud Run deployment below.
+
 ## Option A — Google Cloud Run (recommended, NO API key)
 
 Uses the Cloud Run service account + Vertex AI, so there is no key to leak.
