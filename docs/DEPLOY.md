@@ -3,9 +3,11 @@
 This hosts the live agent so anyone with the URL can run it. The Gemini credential
 stays on the server; visitors never need their own. Two paths.
 
-The audit target is locked to the bundled demo page (a web visitor can only send a text
-description, not a server file path), and a per-IP rate limit (`RATE_LIMIT_PER_MIN`, default 20)
-protects your quota. Every heal call still bills your account, so keep the limit sane.
+The hosted default audits isolated copies of the bundled demo. Live URLs are rejected,
+and local paths are rejected unless an administrator sets `AUDIT_ALLOWED_DIR`. Browser
+scripts and external resources are blocked. The per-IP rate limit
+(`RATE_LIMIT_PER_MIN`, default 20) is only a demo safeguard; every heal call bills your
+account. See [SAFETY.md](SAFETY.md) for limitations and production requirements.
 
 Never put the key in the repo or in client JavaScript. Use the host's secret manager only.
 
@@ -28,6 +30,7 @@ gcloud run deploy klaro \
   --region us-central1 \
   --allow-unauthenticated \
   --memory 2Gi --cpu 2 --timeout 300 \
+  --max-instances 1 \
   --set-env-vars GOOGLE_GENAI_USE_VERTEXAI=True,GOOGLE_CLOUD_LOCATION=global,RATE_LIMIT_PER_MIN=20
 ```
 
@@ -57,5 +60,8 @@ For these, switch off Vertex and use a Gemini API key.
 
 - The container filesystem is ephemeral; the demo heals an in-container copy of the page, which is
   fine for a demo and resets on restart.
-- This exposes a keyed endpoint to the public. The rate limit + locked target are basic protection;
-  for anything beyond a demo, add auth and per-user quotas.
+- Use one application process and one instance for this in-memory demo; restarts lose
+  pending approvals. Multi-worker hosting requires a shared authenticated session store.
+- Before production, add authentication, persistent sessions, workspace expiry/cleanup,
+  durable per-user quotas, and a mature accessibility engine. Passing these limited
+  checks does not establish WCAG conformance.

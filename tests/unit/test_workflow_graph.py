@@ -21,6 +21,8 @@ fails at import time here.
 import os
 import tempfile
 
+import pytest
+
 from app.agent import (
     DEFAULT_TARGET_HTML,
     MAX_HEAL_ATTEMPTS,
@@ -49,7 +51,15 @@ def test_terminal_routes_present():
     """Self-heal loop must expose success, retry (loop) and giveup (cap) exits."""
     routes = {getattr(e, "route", None) for e in _edges()}
     routes = {r for r in routes if isinstance(r, str)}
-    for required in ("clean", "flagged", "violations", "remediating", "success", "retry", "giveup"):
+    for required in (
+        "clean",
+        "flagged",
+        "violations",
+        "remediating",
+        "success",
+        "retry",
+        "giveup",
+    ):
         assert required in routes, f"missing route: {required}"
 
 
@@ -61,11 +71,13 @@ def test_retry_cap_is_positive_int():
 def test_resolve_target_defaults_to_mock_app():
     assert _resolve_target("just a commit message")[0] == DEFAULT_TARGET_HTML
     assert _resolve_target("")[0] == DEFAULT_TARGET_HTML
-    assert _resolve_target("/nonexistent/page.html")[0] == DEFAULT_TARGET_HTML
+    with pytest.raises(ValueError):
+        _resolve_target("/nonexistent/page.html")
 
 
-def test_resolve_target_uses_explicit_existing_html():
+def test_resolve_target_uses_explicit_existing_html(monkeypatch):
     with tempfile.TemporaryDirectory() as d:
+        monkeypatch.setenv("AUDIT_ALLOWED_DIR", d)
         p = os.path.join(d, "page.html")
         with open(p, "w", encoding="utf-8") as f:
             f.write("<html></html>")

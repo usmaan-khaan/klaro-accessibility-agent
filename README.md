@@ -6,6 +6,12 @@
 Built for the Kaggle "AI Agents: Intensive Vibe Coding" capstone, **Agents for Good** track.
 Stack: Google **ADK 2.0**, **Gemini**, **Playwright**, a FastAPI dashboard, vibe-coded in **Antigravity**.
 
+**Safety scope:** audits run on isolated offline HTML copies. Live URL auditing is
+disabled until an isolated egress service is available. Scripts and external
+resources are blocked; local files require an administrator-set `AUDIT_ALLOWED_DIR`.
+Only verified session copies are repaired, and source files are never overwritten.
+See [audit and repair boundaries](docs/SAFETY.md) before hosting this publicly.
+
 ## The problem
 
 A lot of accessibility bugs are invisible to the people shipping them: a missing `alt`, an input
@@ -56,7 +62,7 @@ uv run python -m app.ambient_service             # serves http://127.0.0.1:8080
 ```
 
 Open http://127.0.0.1:8080/, click Run audit, review the issues and the proposed fix, and Approve.
-Klaro applies the change, re-audits, and reports clean. Use Next 5 to work through the 20 seeded
+Klaro verifies a candidate before saving it to the session copy. Use Next 5 to work through the 20 seeded
 demo cases.
 
 The heal step calls Gemini, so it needs Google Cloud auth: `gcloud auth application-default login`.
@@ -70,13 +76,15 @@ The audit and screenshots work without it.
 | `GOOGLE_CLOUD_LOCATION` | Vertex location (use `global` to avoid model 404s) | `global` |
 | `MAX_HEAL_ATTEMPTS` | retries before the agent gives up | `3` |
 | `LOGS_BUCKET_NAME` | GCS bucket for telemetry | off |
+| `AUDIT_ALLOWED_DIR` | Administrator-approved directory for local HTML inputs | local inputs disabled |
 
 Copy `.env.template` to `.env` and add your own values. Don't commit `.env`; it's gitignored.
 
 ## Tests
 
 ```bash
-uv run pytest tests/unit          # security/audit logic and a graph-validity check
+uv run pytest tests/unit tests/test_agent.py # safety, audit, approval, rollback, graph
+uv run pytest tests/browser      # real Chromium + deterministic repairs, no Gemini billing
 uv run pre-commit run --all-files # unit tests plus a Semgrep secret scan
 ```
 
@@ -92,7 +100,7 @@ app/
   agent_runtime_app.py  # Vertex Agent Runtime entrypoint, telemetry, feedback
   dashboard/index.html  # the review UI
   case_library.py       # 20 seeded violations, served 5 at a time
-  mock_app/             # demo target and generated snapshots
+  mock_app/             # bundled demo (session copies/snapshots are temporary)
 tests/                  # unit, integration, eval
 deployment/terraform/   # infra
 docs/                   # writeup, video script, architecture diagram, dossier

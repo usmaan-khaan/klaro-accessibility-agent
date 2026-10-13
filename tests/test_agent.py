@@ -25,7 +25,7 @@ def test_security_screen_redacts_db_tokens():
 
 
 def test_security_screen_redacts_google_api_keys():
-    api_payload = "API KEY is AIzaSyA1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q"
+    api_payload = "API KEY is " + "AIza" + "Sy" + "a" * 33
     output, route, _state = run_security_screen(api_payload)
     assert route == "clean"
     assert "[REDACTED_GOOGLE_API_KEY]" in output
