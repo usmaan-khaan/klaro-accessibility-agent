@@ -120,6 +120,11 @@ def validate_repair(original: str, candidate: str) -> None:
             new.string = old.string or ""
     for soup in (before, after):
         for text in list(soup.find_all(string=True)):
+            if not str(text).strip() and text.parent is soup:
+                # Model transport trims the document's outer whitespace.
+                # It has no rendered effect; spacing inside the document is retained.
+                text.extract()
+                continue
             if not str(text).strip() and text.parent.name not in {
                 "pre",
                 "textarea",

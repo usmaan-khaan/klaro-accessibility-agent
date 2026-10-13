@@ -79,7 +79,7 @@ def test_html_serialization_does_not_count_as_a_structural_edit():
     from app.case_library import build_batch_page
 
     original = build_batch_page(0)
-    validate_repair(original, str(BeautifulSoup(original, "html.parser")))
+    validate_repair(original, str(BeautifulSoup(original, "html.parser")).strip())
 
 
 def test_visible_word_separation_is_preserved():
