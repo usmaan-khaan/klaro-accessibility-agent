@@ -1,11 +1,19 @@
 {
-  "remote_agent_runtime_id": "None",
-  "deployment_timestamp": "None",
-  "pending_operation": {
-    "operation_name": "projects/660757892320/locations/us-east1/reasoningEngines/3535994210555527168/operations/8515252807303954432",
-    "project": "ai-agents-project-499914",
-    "location": "us-east1",
-    "deployment_target": "agent_runtime",
-    "started_at": "2026-06-21T14:45:10.554444+00:00"
+  "remote_agent_runtime_id": "projects/660757892320/locations/us-east1/reasoningEngines/3535994210555527168",
+  "deployment_target": "agent_runtime",
+  "is_a2a": false,
+  "deployment_timestamp": "2026-10-13T11:14:44.655906Z",
+  "source_commit": "90be060e90c4568b697bc9516d5213ab17012db9",
+  "verification_timestamp": "2026-10-13T11:17:55Z",
+  "verification": {
+    "ci": "https://github.com/usmaan-khaan/klaro-accessibility-agent/actions/runs/38387677011",
+    "regression_tests": 59,
+    "live_checks": [
+      "remote_url_rejected",
+      "chromium_offline_audit",
+      "gemini_validated_repair",
+      "human_approval_pause",
+      "approved_repair_verified"
+    ]
   }
 }
